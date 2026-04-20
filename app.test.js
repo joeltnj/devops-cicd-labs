@@ -1,7 +1,7 @@
 // ── Tests unitaires ───────────────────────────────────────
 // GitHub Actions les exécutera à chaque push
 
-const { add, subtract, multiply } = require('./app');
+const { add, subtract, multiply, divide } = require('./app');
 
 // Test : addition
 test('add(2, 3) doit retourner 5', () => {
@@ -22,6 +22,6 @@ test('divide(10, 2) doit retourner 5', () => {
   expect(divide(10, 2)).toBe(5);
 });
 
-// test('divide(10, 0) doit lever une erreur', () => {
-//   expect(() => divide(10, 0)).toThrow('Division par zéro interdite');
-// });
+test('divide(10, 0) doit lever une erreur', () => {
+  expect(() => divide(10, 0)).toThrow('Division par zéro interdite');
+});
