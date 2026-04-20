@@ -1,0 +1,58 @@
+# ============================================================
+# WORKFLOW CI — Lint + Test automatiques
+# Déclenché à chaque push ou PR sur main
+# Analogie : un correcteur automatique qui vérifie ton code
+# avant que tu le fusionnes
+# ============================================================
+
+name: CI — Tests
+
+# ── EVENT : déclencheurs ─────────────────────────────────────
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:      # bouton manuel dans GitHub UI
+
+# ── JOBS ─────────────────────────────────────────────────────
+jobs:
+
+  test:
+    name: Lint + Test
+    runs-on: ubuntu-latest   # VM fournie par GitHub gratuitement
+
+    # Tester sur plusieurs versions de Node en parallèle
+    # Analogie : envoyer le même devoir à 3 correcteurs différents
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+
+      # 1. Cloner le dépôt sur la VM GitHub
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 2. Installer la version de Node définie dans la matrix
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'        # met en cache node_modules entre les runs
+
+      # 3. Installer les dépendances
+      - name: Installer les dépendances
+        run: npm ci           # plus strict que npm install, idéal pour CI
+
+      # 4. Lancer les tests avec couverture de code
+      - name: Lancer les tests
+        run: npm run test:coverage
+
+      # 5. Afficher un résumé dans les logs
+      - name: Résumé
+        run: |
+          echo "✅ Tests passés sur Node ${{ matrix.node-version }}"
+          echo "📦 Dépôt : ${{ github.repository }}"
+          echo "🔀 Branche : ${{ github.ref_name }}"
+          echo "👤 Auteur : ${{ github.actor }}"
