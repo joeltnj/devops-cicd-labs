@@ -1,0 +1,61 @@
+# ============================================================
+# WORKFLOW DEPLOY — Déploiement automatique sur le VPS
+# Déclenché après le succès du workflow Docker
+# Analogie : le livreur qui attend que l'usine ait emballé
+# le colis avant de partir le livrer
+# ============================================================
+
+name: Deploy — VPS
+
+# ── EVENT : se déclenche après Docker workflow ────────────────
+on:
+  workflow_run:
+    workflows: ["Docker — Build & Push"]  # nom exact du workflow Docker
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# ── JOBS ─────────────────────────────────────────────────────
+jobs:
+
+  deploy:
+    name: Déployer sur le VPS
+    runs-on: ubuntu-latest
+
+    # Ne déployer que si le workflow Docker a réussi
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+
+      # 1. Configurer la clé SSH
+      - name: Configurer la clé SSH
+        run: |
+          mkdir -p ~/.ssh
+          # Écrire la clé privée depuis les secrets
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Accepter automatiquement le fingerprint du VPS
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # 2. Se connecter au VPS et lancer le script de déploiement
+      - name: Déployer sur le VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+              "bash ~/deploy/lab-01/deploy.sh"
+
+      # 3. Vérifier que le container tourne après déploiement
+      - name: Vérifier le déploiement
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+              "docker ps | grep lab-01-app"
+
+      # 4. Résumé
+      - name: Résumé
+        run: |
+          echo "✅ Déploiement terminé sur ${{ secrets.VPS_HOST }}"
+          echo "🔀 Commit : ${{ github.sha }}"
+          echo "👤 Déclenché par : ${{ github.actor }}"
