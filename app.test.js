@@ -17,3 +17,11 @@ test('subtract(10, 4) doit retourner 6', () => {
 test('multiply(3, 4) doit retourner 12', () => {
   expect(multiply(3, 4)).toBe(12);
 });
+
+test('divide(10, 2) doit retourner 5', () => {
+  expect(divide(10, 2)).toBe(5);
+});
+
+// test('divide(10, 0) doit lever une erreur', () => {
+//   expect(() => divide(10, 0)).toThrow('Division par zéro interdite');
+// });
